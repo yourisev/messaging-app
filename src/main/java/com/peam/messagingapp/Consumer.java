@@ -1,14 +1,11 @@
 package com.peam.messagingapp;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.*;
 
 import java.io.IOException;
-import java.time.LocalTime;
 import java.util.concurrent.TimeoutException;
 
-public class Sender {
+public class Consumer {
     public static void main(String[] args) {
         ConnectionFactory factory = new ConnectionFactory();
 
@@ -16,7 +13,7 @@ public class Sender {
         //factory.set("localhost");
         /*If rabbit MQ is working on a remote server
         You have setHost -> setUsername -> setPassword -> setPort
-        To configure the connectionto the server
+        To configure the connection to the server
          */
 
         Connection connection = null;
@@ -28,16 +25,11 @@ public class Sender {
             //create a Queue and give a Queue name
             channel.queueDeclare("hello-world",false,false,false,null);
 
-            String message = "This is my fist message Queue, is this real ? -" + LocalTime.now();
-
-            //Send a message to the queue when exchange is empty then
-            //this is a direct or default exchange
-            channel.basicPublish("","hello-world", false,null,message.getBytes());
-
-            //Close Connection
-            connection.close();
-
-            System.out.println("Waouh, Message sent!!!");
+            channel.basicConsume("hello-world", true, (consumerTag, message) ->{
+                String readMessage = new String(message.getBody(), "UTF-8");
+                System.out.println("Now just consumed a message: "+ readMessage);
+            }, consumerTag -> { });
+            //The last parameter is a cancel callback
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (TimeoutException e) {
